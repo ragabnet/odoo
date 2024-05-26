@@ -2,6 +2,8 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 import logging
 from datetime import datetime
+
+import requests
 from markupsafe import Markup
 from functools import partial
 from itertools import groupby
@@ -1110,6 +1112,18 @@ class PosOrder(models.Model):
     def action_receipt_to_customer(self, name, client, ticket):
         if not self:
             return False
+
+        # send the ticket to the controller
+        payload = {
+            "receipt": ticket,
+            "nfc_tag": "e5644610-fe86-4606-b0f4-5ab16982bf12",
+            "amount_tax": self.amount_tax,
+            "amount_total": self.amount_total,
+            "amount_subtotal": self.amount_total - self.amount_tax,
+            "receipt_number": self.name,
+        }
+        response = requests.post(f'http://127.0.0.1:18017/api/v1/fatoora/canvas/post', json=payload)
+
         if not client.get('email'):
             return False
 
